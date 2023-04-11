@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
@@ -13,8 +14,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import tools.EmployeeDatabase;
 import tools.Helper;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 public class DashboardController {
@@ -166,6 +169,30 @@ public class DashboardController {
     @FXML
     private Label username;
 
+    private EmployeeDatabase db = EmployeeDatabase.getInstance();
+
+    public void homeTotalEmployees() {
+        int emp_count = db.getEmpCount();
+        home_totalEmployees.setText(String.valueOf(emp_count));
+    }
+
+    public void homeEmployeetotalPresent() {
+        int emp_count = db.getEmpCount();         // this should be different after we modify the database to include the presents
+        home_totalPresents.setText(String.valueOf(emp_count));
+    }
+
+    public void homeTotalInactive() {
+        home_totalInactiveEm.setText("0");      // this should be different after we modify the database to include the inactive emps
+    }
+
+    public void homeChar() {
+        XYChart.Series chart = new XYChart.Series();
+        ArrayList<Object[]> weekStats = db.getWeekStats();
+        for(int i=0;i<weekStats.size();i++)
+            chart.getData().add(new XYChart.Data(weekStats.get(i)[0], weekStats.get(i)[1]));
+        home_chart.getData().add(chart);
+    }
+
     @FXML
     void addEmployeeAdd(ActionEvent event) {
 
@@ -229,7 +256,43 @@ public class DashboardController {
 
     @FXML
     void switchForm(ActionEvent event) {
+        if (event.getSource() == home_btn) {
+            home_form.setVisible(true);
+            addEmployee_form.setVisible(false);
+            salary_form.setVisible(false);
 
+            home_btn.setStyle("-fx-background-color:linear-gradient(to bottom right, #3a4368, #28966c);");
+            addEmployee_btn.setStyle("-fx-background-color:transparent");
+            salary_btn.setStyle("-fx-background-color:transparent");
+
+            homeTotalEmployees();
+            homeEmployeetotalPresent();
+            homeTotalInactive();
+            homeChar();
+        }else if (event.getSource() == addEmployee_btn) {
+            home_form.setVisible(false);
+            addEmployee_form.setVisible(true);
+            salary_form.setVisible(false);
+
+            addEmployee_btn.setStyle("-fx-background-color:linear-gradient(to bottom right, #3a4368, #28966c);");
+            home_btn.setStyle("-fx-background-color:transparent");
+            salary_btn.setStyle("-fx-background-color:transparent");
+
+//            addEmployeeGendernList();
+//            addEmployeePositionList();
+//            addEmployeeSearch();
+
+        }else if (event.getSource() == salary_btn) {
+            home_form.setVisible(false);
+            addEmployee_form.setVisible(false);
+            salary_form.setVisible(true);
+
+            salary_btn.setStyle("-fx-background-color:linear-gradient(to bottom right, #3a4368, #28966c);");
+            addEmployee_btn.setStyle("-fx-background-color:transparent");
+            home_btn.setStyle("-fx-background-color:transparent");
+
+//            salaryShowListData();
+        }
     }
 
     private double x = 0;

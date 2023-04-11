@@ -5,7 +5,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import tools.Database;
+import tools.EmployeeDatabase;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -20,9 +20,6 @@ import java.util.ResourceBundle;
 
 public class LoginController implements Initializable{
 
-    // Database
-    private Database db = new Database();   // creates a database instance and initialize it with default url, username, pass
-
     @FXML
     private Button loginBtn;
 
@@ -31,6 +28,8 @@ public class LoginController implements Initializable{
 
     @FXML
     private TextField username;
+
+    private EmployeeDatabase db = EmployeeDatabase.getInstance();
 
     private double x=0;
     private double y=0;
