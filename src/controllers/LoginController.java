@@ -18,7 +18,7 @@ public class Controller implements Initializable{
     private Database db = new Database();   // creates a database instance and initialize it with default url, username, pass
 
     @FXML
-    private Button login;
+    private Button loginBtn;
 
     @FXML
     private PasswordField password;
@@ -35,7 +35,11 @@ public class Controller implements Initializable{
             boolean authorized = db.authorize(username.getText(), password.getText());
             if (authorized) {
                 System.out.println("welcome to the dashboard");
+                Helper.InformationBox("Successful Login");
                 // show the dashboard
+                loginBtn.getScene().getWindow().hide();
+
+
             }else {
                 System.out.println("Incorrect username or password!");
                 Helper.ErrorBox("Incorrect username or password!");
