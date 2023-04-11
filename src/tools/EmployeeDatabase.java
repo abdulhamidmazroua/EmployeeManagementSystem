@@ -38,6 +38,7 @@ public class EmployeeDatabase {
             connection = DriverManager.getConnection(url, username, password);
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
+            Helper.errorAlert(e.toString());
         }
     }
 
@@ -59,6 +60,7 @@ public class EmployeeDatabase {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
+            Helper.errorAlert(e.toString());
         }
         return false;
     }
@@ -71,21 +73,6 @@ public class EmployeeDatabase {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private class Day{
-        private String date;
-        private int empCount;
-
-        Day(String date, int empCount) {this.date = date; this.empCount = empCount;}
-
-        public String getDate() {
-            return date;
-        }
-
-        public int getEmpCount() {
-            return empCount;
         }
     }
 

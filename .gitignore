@@ -1,2 +1,4 @@
 .idea
 EmployeeManagementSystem.iml
+out/
+src/mysql-connector-j-8.0.32.jar

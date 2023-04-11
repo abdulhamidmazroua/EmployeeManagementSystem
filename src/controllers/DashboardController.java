@@ -16,7 +16,9 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import tools.EmployeeDatabase;
 import tools.Helper;
+import tools.RecordsNotEnoughException;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -177,8 +179,13 @@ public class DashboardController {
     }
 
     public void homeEmployeetotalPresent() {
-        int emp_count = db.getEmpCount();         // this should be different after we modify the database to include the presents
-        home_totalPresents.setText(String.valueOf(emp_count));
+        try{
+            int emp_count = db.getEmpCount();         // this should be different after we modify the database to include the presents
+            home_totalPresents.setText(String.valueOf(emp_count));
+        }catch(RuntimeException e){
+            e.printStackTrace();
+            Helper.errorAlert(e.toString());
+        }
     }
 
     public void homeTotalInactive() {
@@ -187,10 +194,15 @@ public class DashboardController {
 
     public void homeChar() {
         XYChart.Series chart = new XYChart.Series();
-        ArrayList<Object[]> weekStats = db.getWeekStats();
-        for(int i=0;i<weekStats.size();i++)
-            chart.getData().add(new XYChart.Data(weekStats.get(i)[0], weekStats.get(i)[1]));
-        home_chart.getData().add(chart);
+        try{
+            ArrayList<Object[]> weekStats = db.getWeekStats();
+            for(int i=0;i<weekStats.size();i++)
+                chart.getData().add(new XYChart.Data(weekStats.get(i)[0], weekStats.get(i)[1]));
+            home_chart.getData().add(chart);
+        }catch (RuntimeException e){
+            e.printStackTrace();
+            Helper.errorAlert(e.toString());
+        }
     }
 
     @FXML
