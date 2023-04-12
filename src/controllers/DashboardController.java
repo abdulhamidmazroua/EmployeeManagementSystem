@@ -281,11 +281,11 @@ public class DashboardController implements Initializable {
         empListData = db.getEmployeeListData();
 
         addEmployee_col_employeeID.setCellValueFactory(new PropertyValueFactory<>("employee_id"));
-        addEmployee_col_gender.setCellValueFactory(new PropertyValueFactory<>("first_name"));
-        addEmployee_col_phoneNum.setCellValueFactory(new PropertyValueFactory<>("last_name"));
-        addEmployee_col_position.setCellValueFactory(new PropertyValueFactory<>("gender"));
-        addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("phone"));
-        addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("position"));
+        addEmployee_col_firstName.setCellValueFactory(new PropertyValueFactory<>("first_name"));
+        addEmployee_col_lastName.setCellValueFactory(new PropertyValueFactory<>("last_name"));
+        addEmployee_col_gender.setCellValueFactory(new PropertyValueFactory<>("gender"));
+        addEmployee_col_phoneNum.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        addEmployee_col_position.setCellValueFactory(new PropertyValueFactory<>("position"));
         addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("date"));
 
         addEmployee_tableView.setItems(empListData);
@@ -328,6 +328,9 @@ public class DashboardController implements Initializable {
     @FXML
     void addEmployeeDelete(ActionEvent event) {
 
+        Employee employee = addEmployee_tableView.getSelectionModel().getSelectedItem();
+        db.deleteEmployee(employee);
+        addEmployeeShowListData();
     }
 
 
@@ -369,12 +372,53 @@ public class DashboardController implements Initializable {
 
     @FXML
     void addEmployeeSelect(MouseEvent event) {
-
+        Employee employee = addEmployee_tableView.getSelectionModel().getSelectedItem();
+        addEmployee_employeeID.setText(employee.getEmployee_id());
+        addEmployee_username.setText(employee.getUsername());
+        addEmployee_password.setText(employee.getPassword());
+        addEmployee_firstName.setText(employee.getFirst_name());
+        addEmployee_lastName.setText(employee.getLast_name());
+        addEmployee_gender.setValue(employee.getGender());
+        addEmployee_position.setValue(employee.getPosition());
+        addEmployee_phoneNum.setText(employee.getPhone());
+        try{
+            addEmployee_image.setImage(new Image(employee.getImage(),101, 127, false, true));
+            image_uri = employee.getImage();
+        }catch (NullPointerException e){
+            System.out.println("There is no such image");
+        }
     }
 
     @FXML
     void addEmployeeUpdate(ActionEvent event) {
+        Employee employee = addEmployee_tableView.getSelectionModel().getSelectedItem();
+        ArrayList<String[]> updateList = new ArrayList<>();
+        if (employee.getUsername() != addEmployee_username.getText())
+            updateList.add(new String[] {"username", addEmployee_username.getText()});
+        String str = addEmployee_password.getText();
+        String emp = employee.getPassword();
+        if (!str.equals(emp))
+            updateList.add(new String[] {"password", addEmployee_password.getText()});
+        if (!employee.getFirst_name().equals(addEmployee_firstName.getText()))
+            updateList.add(new String[] {"first_name", addEmployee_firstName.getText()});
+        if (!employee.getLast_name().equals(addEmployee_lastName.getText()))
+            updateList.add(new String[] {"last_name", addEmployee_lastName.getText()});
+        if (!employee.getGender().equals(addEmployee_gender.getSelectionModel().getSelectedItem()))
+            updateList.add(new String[] {"gender", addEmployee_gender.getSelectionModel().getSelectedItem()});
+        if (!employee.getPhone().equals(addEmployee_phoneNum.getText()))
+            updateList.add(new String[] {"phone", addEmployee_phoneNum.getText()});
+        if (!employee.getPosition().equals(addEmployee_position.getSelectionModel().getSelectedItem()))
+            updateList.add(new String[] {"position", addEmployee_position.getSelectionModel().getSelectedItem()});
+        try{
+            if (!employee.getImage().equals(addEmployee_image.getImage().getUrl()))
+                updateList.add(new String[] {"username", addEmployee_image.getImage().getUrl()});
+        }catch (NullPointerException e){
+            Helper.warningAlert("There will be no image for this employee");
+        }
 
+        db.updateEmployee(employee.getEmployee_id(), updateList);
+        addEmployeeShowListData();
+        addEmployeeReset(event);
     }
 
 
@@ -492,6 +536,8 @@ public class DashboardController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        displayUsername();
+
         homeTotalEmployees();
         homeTotalPresent();
         homeTotalInactive();

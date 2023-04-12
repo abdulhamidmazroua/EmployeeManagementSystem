@@ -62,7 +62,7 @@ public class EmployeeDatabase {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 userData = new UserData();
-                userData.setUsername(resultSet.getString("username"));
+                userData.setUsername(resultSet.getString("first_name") + " " + resultSet.getString("last_name"));
                 userData.setImage_uri(resultSet.getString("image"));
                 return true;
             }
@@ -133,7 +133,6 @@ public class EmployeeDatabase {
             resultSet.close();
         } catch (SQLException e) {
             Helper.errorAlert(e.toString());
-            throw new RuntimeException(e);
         }
         return empListData;
     }
@@ -158,9 +157,44 @@ public class EmployeeDatabase {
             Helper.informationAlert(rowsAffected + " rows affected");
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            Helper.errorAlert(e.toString());
         }
     }
 
+    public void deleteEmployee(Employee employee) {
+        try(PreparedStatement preparedStatement = connection.prepareStatement("delete from employee where employee_id=?")) {
+            preparedStatement.setString(1, employee.getEmployee_id());
+            int rowsAffected = preparedStatement.executeUpdate();
+            Helper.informationAlert(rowsAffected + " rows affected");
+        } catch (SQLException e) {
+            Helper.errorAlert(e.toString());
+        }
+    }
+
+    public void updateEmployee(String employee_id, ArrayList<String[]> updateList) {
+        int numberofcolumns = updateList.size();
+
+        StringBuilder sqlStatement = new StringBuilder("update employee set ");
+        for(int i=0; i < numberofcolumns; i++){
+            if (i==0){
+                sqlStatement.append( updateList.get(i)[0] + "=?");
+                continue;
+            }
+            sqlStatement.append(", " + updateList.get(i)[0] + "=?");
+        }
+        sqlStatement.append(" where employee_id=?");
+
+        try(PreparedStatement preparedStatement = connection.prepareStatement(String.valueOf(sqlStatement))) {
+            int i;
+            for(i=1;i<=numberofcolumns;i++){
+                preparedStatement.setString(i, updateList.get(i-1)[1]);
+            }
+            preparedStatement.setString(i, employee_id);
+            int rowsAffected = preparedStatement.executeUpdate();
+            Helper.informationAlert(rowsAffected + " rows affected");
+        } catch (SQLException e) {
+            Helper.errorAlert(e.toString());
+        }
+    }
 }
 
