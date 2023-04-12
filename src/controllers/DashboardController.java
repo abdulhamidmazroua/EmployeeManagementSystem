@@ -1,28 +1,40 @@
 package controllers;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import models.Employee;
+import models.UserData;
 import tools.EmployeeDatabase;
 import tools.Helper;
-import tools.RecordsNotEnoughException;
 
-import java.sql.SQLException;
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
-public class DashboardController {
+public class DashboardController implements Initializable {
 
     @FXML
     private Button addEmployee_addBtn;
@@ -34,25 +46,25 @@ public class DashboardController {
     private Button addEmployee_clearBtn;
 
     @FXML
-    private TableColumn<?, ?> addEmployee_col_date;
+    private TableColumn<Employee, String> addEmployee_col_date;
 
     @FXML
-    private TableColumn<?, ?> addEmployee_col_employeeID;
+    private TableColumn<Employee, String> addEmployee_col_employeeID;
 
     @FXML
-    private TableColumn<?, ?> addEmployee_col_firstName;
+    private TableColumn<Employee, String> addEmployee_col_firstName;
 
     @FXML
-    private TableColumn<?, ?> addEmployee_col_gender;
+    private TableColumn<Employee, String> addEmployee_col_gender;
 
     @FXML
-    private TableColumn<?, ?> addEmployee_col_lastName;
+    private TableColumn<Employee, String> addEmployee_col_lastName;
 
     @FXML
-    private TableColumn<?, ?> addEmployee_col_phoneNum;
+    private TableColumn<Employee, String> addEmployee_col_phoneNum;
 
     @FXML
-    private TableColumn<?, ?> addEmployee_col_position;
+    private TableColumn<Employee, String> addEmployee_col_position;
 
     @FXML
     private Button addEmployee_deleteBtn;
@@ -67,7 +79,13 @@ public class DashboardController {
     private AnchorPane addEmployee_form;
 
     @FXML
-    private ComboBox<?> addEmployee_gender;
+    private ComboBox<String> addEmployee_gender;
+
+    @FXML
+    private TextField addEmployee_username;
+
+    @FXML
+    private PasswordField addEmployee_password;
 
     @FXML
     private ImageView addEmployee_image;
@@ -82,13 +100,13 @@ public class DashboardController {
     private TextField addEmployee_phoneNum;
 
     @FXML
-    private ComboBox<?> addEmployee_position;
+    private ComboBox<String> addEmployee_position;
 
     @FXML
     private TextField addEmployee_search;
 
     @FXML
-    private TableView<?> addEmployee_tableView;
+    private TableView<Employee> addEmployee_tableView;
 
     @FXML
     private Button addEmployee_updateBtn;
@@ -100,7 +118,7 @@ public class DashboardController {
     private Button home_btn;
 
     @FXML
-    private BarChart<?, ?> home_chart;
+    private BarChart<String, Integer> home_chart;
 
     @FXML
     private AnchorPane home_form;
@@ -178,7 +196,7 @@ public class DashboardController {
         home_totalEmployees.setText(String.valueOf(emp_count));
     }
 
-    public void homeEmployeetotalPresent() {
+    public void homeTotalPresent() {
         try{
             int emp_count = db.getEmpCount();         // this should be different after we modify the database to include the presents
             home_totalPresents.setText(String.valueOf(emp_count));
@@ -193,6 +211,9 @@ public class DashboardController {
     }
 
     public void homeChar() {
+        if (home_chart.getData().size() == 2){
+            home_chart.getData().clear();
+        }
         XYChart.Series chart = new XYChart.Series();
         try{
             ArrayList<Object[]> weekStats = db.getWeekStats();
@@ -205,9 +226,103 @@ public class DashboardController {
         }
     }
 
+    private String[] listGender = {"Male", "Female", "Others"};
+    public void setEmployeeGenders() {
+        ObservableList listData = FXCollections.observableArrayList(listGender);
+        addEmployee_gender.setItems(listData);
+    }
+
+    private String[] positionList = {"Software Engineer", "Front End Developer", "Back End Developer", "Application Developer", "Human Resource Specialist"};
+    public void setEmployeePositions() {
+        ObservableList listData = FXCollections.observableArrayList(positionList);
+        addEmployee_position.setItems(listData);
+    }
+
+    public void setEmployeeSearch() {
+        FilteredList<Employee> filter = new FilteredList<>(empListData, e -> true);
+        addEmployee_search.textProperty().addListener((Observable, oldValue, newValue) -> {
+            filter.setPredicate(predicateEmployeeData -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+
+                String searchKey = newValue.toLowerCase();
+
+                if (predicateEmployeeData.getEmployee_id().toString().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getFirst_name().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getLast_name().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getGender().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getPhone().contains(searchKey)) {
+                    return true;
+                }
+                else if (predicateEmployeeData.getPosition().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getDate().contains(searchKey)) {
+                    return true;
+                }else {
+                    return false;
+                }
+            });
+        });
+
+        SortedList<Employee> sortList = new SortedList<>(filter);
+
+        sortList.comparatorProperty().bind(addEmployee_tableView.comparatorProperty());
+        addEmployee_tableView.setItems(sortList);
+    }
+
+
+    private ObservableList<Employee> empListData;
+    public void addEmployeeShowListData() {
+        empListData = db.getEmployeeListData();
+
+        addEmployee_col_employeeID.setCellValueFactory(new PropertyValueFactory<>("employee_id"));
+        addEmployee_col_gender.setCellValueFactory(new PropertyValueFactory<>("first_name"));
+        addEmployee_col_phoneNum.setCellValueFactory(new PropertyValueFactory<>("last_name"));
+        addEmployee_col_position.setCellValueFactory(new PropertyValueFactory<>("gender"));
+        addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("position"));
+        addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("date"));
+
+        addEmployee_tableView.setItems(empListData);
+
+    }
+
     @FXML
     void addEmployeeAdd(ActionEvent event) {
+        Date date = new Date();
+        java.sql.Date sqlDate = new java.sql.Date(date.getTime());
+        if (addEmployee_employeeID.getText().isEmpty()
+                || addEmployee_username.getText().isEmpty()
+                || addEmployee_password.getText().isEmpty()
+                || addEmployee_firstName.getText().isEmpty()
+                || addEmployee_lastName.getText().isEmpty()
+                || addEmployee_gender.getSelectionModel().getSelectedItem() == null
+                || addEmployee_phoneNum.getText().isEmpty()
+                || addEmployee_position.getSelectionModel().getSelectedItem() == null
+                || image_uri == null || image_uri == "")
+            Helper.errorAlert("Please fill in the blank fields");
+        else {
+            db.addEmployee(
+                    addEmployee_employeeID.getText(),
+                    addEmployee_username.getText(),
+                    addEmployee_password.getText(),
+                    addEmployee_firstName.getText(),
+                    addEmployee_lastName.getText(),
+                    addEmployee_gender.getSelectionModel().getSelectedItem(),
+                    addEmployee_phoneNum.getText(),
+                    addEmployee_position.getSelectionModel().getSelectedItem(),
+                    image_uri,
+                    sqlDate
+            );
+            addEmployeeShowListData();
+            addEmployeeReset(event);
 
+        }
     }
 
     @FXML
@@ -215,15 +330,23 @@ public class DashboardController {
 
     }
 
+
     @FXML
-    void addEmployeeGendernList(ActionEvent event) {
+    void addEmployeeGenderList(ActionEvent event) {
 
     }
 
+    private String image_uri;
     @FXML
     void addEmployeeInsertImage(MouseEvent event) {
-
+        FileChooser open = new FileChooser();
+        File file = open.showOpenDialog(main_form.getScene().getWindow());
+        if (file != null) {
+            image_uri = file.getAbsolutePath();
+            addEmployee_image.setImage(new Image(file.toURI().toString(),101, 127, false, true));
+        }
     }
+
 
     @FXML
     void addEmployeePositionList(ActionEvent event) {
@@ -232,12 +355,16 @@ public class DashboardController {
 
     @FXML
     void addEmployeeReset(ActionEvent event) {
-
-    }
-
-    @FXML
-    void addEmployeeSearch(KeyEvent event) {
-
+        addEmployee_employeeID.setText("");
+        addEmployee_username.setText("");
+        addEmployee_password.setText("");
+        addEmployee_firstName.setText("");
+        addEmployee_lastName.setText("");
+        addEmployee_gender.getSelectionModel().clearSelection();
+        addEmployee_position.getSelectionModel().clearSelection();
+        addEmployee_phoneNum.setText("");
+        addEmployee_image.setImage(null);
+        image_uri = "";
     }
 
     @FXML
@@ -278,9 +405,10 @@ public class DashboardController {
             salary_btn.setStyle("-fx-background-color:transparent");
 
             homeTotalEmployees();
-            homeEmployeetotalPresent();
+            homeTotalPresent();
             homeTotalInactive();
             homeChar();
+
         }else if (event.getSource() == addEmployee_btn) {
             home_form.setVisible(false);
             addEmployee_form.setVisible(true);
@@ -290,9 +418,9 @@ public class DashboardController {
             home_btn.setStyle("-fx-background-color:transparent");
             salary_btn.setStyle("-fx-background-color:transparent");
 
-//            addEmployeeGendernList();
-//            addEmployeePositionList();
-//            addEmployeeSearch();
+            setEmployeeGenders();
+            setEmployeePositions();
+            setEmployeeSearch();
 
         }else if (event.getSource() == salary_btn) {
             home_form.setVisible(false);
@@ -358,4 +486,19 @@ public class DashboardController {
         System.exit(0);
     }
 
+    public void displayUsername() {
+        username.setText(db.getUserData().getUsername());
+    }
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        homeTotalEmployees();
+        homeTotalPresent();
+        homeTotalInactive();
+        homeChar();
+
+        addEmployeeShowListData();
+        setEmployeeGenders();
+        setEmployeePositions();
+    }
 }
